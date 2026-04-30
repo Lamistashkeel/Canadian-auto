@@ -23,13 +23,13 @@ export default function HomePage() {
     <>
       {/* ── HERO ─────────────────────────────────────────── */}
       <section
-        className="relative min-h-[580px] flex items-center overflow-hidden bg-[#0a0a0a]"
-        style={{
-          backgroundImage: "url('/images/hero-bg.webp')",
-          backgroundSize: "cover",
-          backgroundPosition: "right center",
-        }}
-      >
+  className="relative min-h-[580px] md:min-h-[580px] min-h-[420px] flex items-center overflow-hidden bg-[#0a0a0a]"
+  style={{
+    backgroundImage: "url('/images/hero-bg.webp')",
+    backgroundSize: "cover",
+    backgroundPosition: "center top",
+  }}
+>
         {/* dark overlay */}
         <div className="absolute inset-0 bg-black/60" />
 

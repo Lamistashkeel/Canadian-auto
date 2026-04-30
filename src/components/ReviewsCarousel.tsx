@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { REVIEWS } from "@/data/site";
 import GoogleG from "./GoogleG";
 import SectionLabel from "./SectionLabel";
@@ -26,6 +26,11 @@ function Stars({ count }: { count: number }) {
 }
 
 function ReviewCard({ r }: { r: Review }) {
+  const lines = r.text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-200 hover:border-[#c0392b] transition-colors flex flex-col">
       {/* Header */}
@@ -46,10 +51,12 @@ function ReviewCard({ r }: { r: Review }) {
       {/* Stars */}
       <Stars count={r.rating} />
 
-      {/* Full text — no truncation at all */}
-      <p className="text-[13px] text-gray-600 leading-[1.75] flex-1">
-        {r.text}
-      </p>
+      {/* Har sentence apni line pe */}
+      <div className="text-[13px] text-gray-600 leading-[1.75] flex-1 flex flex-col gap-[2px]">
+        {lines.map((line, i) => (
+          <span key={i}>{line}</span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -192,11 +199,24 @@ export default function ReviewsCarousel() {
   const [allReviews, setAllReviews] = useState<Review[]>(REVIEWS);
   const [page, setPage] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [perPage, setPerPage] = useState(2);
 
-  // 2 reviews per page — shows 2 complete cards side by side
+  // Mobile: 1 per page — Desktop: 2 per page
+  useEffect(() => {
+    const update = () => setPerPage(window.innerWidth < 768 ? 1 : 2);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Page reset when perPage changes
+  useEffect(() => {
+    setPage(0);
+  }, [perPage]);
+
   const pages: Review[][] = [];
-  for (let i = 0; i < allReviews.length; i += 2) {
-    pages.push(allReviews.slice(i, i + 2));
+  for (let i = 0; i < allReviews.length; i += perPage) {
+    pages.push(allReviews.slice(i, i + perPage));
   }
   const total = pages.length;
 
@@ -208,10 +228,12 @@ export default function ReviewsCarousel() {
     setPage(0);
   }
 
+  // Sirf current page ke cards — koi sliding overflow nahi
+  const currentCards = pages[page] ?? [];
+
   return (
     <>
       <section className="bg-gray-100 py-20 px-6 md:px-9">
-        {/* max-w-5xl gives enough room for 2 cards side by side with full text */}
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
@@ -233,24 +255,15 @@ export default function ReviewsCarousel() {
             </button>
           </div>
 
-          {/* Viewport */}
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${page * 100}%)` }}
-            >
-              {pages.map((group, gi) => (
-                <div
-                  key={gi}
-                  // 2 columns side by side — each card gets ~half the width = full text visible
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-full flex-shrink-0 items-stretch"
-                >
-                  {group.map((r, i) => (
-                    <ReviewCard key={`${gi}-${i}`} r={r} />
-                  ))}
-                </div>
-              ))}
-            </div>
+          {/* Cards — only current page, no flex sliding */}
+          <div
+            className={`grid gap-4 items-stretch ${
+              perPage === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"
+            }`}
+          >
+            {currentCards.map((r, i) => (
+              <ReviewCard key={`${page}-${i}`} r={r} />
+            ))}
           </div>
 
           {/* Controls */}
